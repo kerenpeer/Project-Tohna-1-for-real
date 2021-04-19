@@ -1,3 +1,4 @@
+from os import CLD_EXITED
 import sys
 
 # truncate the decimals of a float
@@ -13,59 +14,55 @@ def calc_dist(point1, point2):
     return sum
 
 # goes over all centroids and returns the closest one to point
-def find_closest_centroid(point, curr_centroid, centroids):
-    closest = curr_centroid
+def find_closest_centroid(point: tuple, curr_centroid: int, centroids: list):
+    i_closest = curr_centroid
     # print(f'find_closest_centroid: closest centroid is: {closest}')
-    if closest == float('inf'):
+    if i_closest == float('inf'):
         closest_dist = float('inf')
     else:
         # print(f'find_closest_centroid: calc dist between {point} , {centroids[closest][0]}')
-        closest_dist = calc_dist(point, centroids[closest][0])
+        closest_dist = calc_dist(point, centroids[i_closest][0])
     # print(f'find_closest_centroid: closest_dist is: {closest_dist}')
 
-    for centroid in centroids.keys():
+    for index, centroid in enumerate(centroids):
         # print(f'find_closest_centroid: calc dist between {point} , {centroids[centroid][0]}')
-        this_dist = calc_dist(point, centroids[centroid][0])
+        this_dist = calc_dist(point, centroid[0])
         # (f'find_closest_centroid: this_dist is: {this_dist}')
         if this_dist < closest_dist:
             # print (f'find_closest_centroid: found closer centroid. Dist is: {this_dist}, centroid is: {centroid}')
-            closest = centroid
+            i_closest = index
             closest_dist = this_dist
             # print(f'find_closest_centroid: new closest is: {closest} , closest_dist is: {closest_dist}')
-    return closest
+    return i_closest
 
 # removes a point from the centroid it was in
-def remove_point_from_centroid(point, centroid, centroids):
+def remove_point_from_centroid(point: tuple, i_centroid: int, centroids: list):
     # print(f'remove_point_from_centroid: removing point {point} from centroid {centroid}')
-    if centroid == float('inf'):
+    if i_centroid == float('inf'):
         # x isn't in a centroid, no need to remove
         # print(f'remove_point_from_centroid: centroid is inf, nowhere to remove from')
         return
-    centroid_point , amount  = centroids[centroid]
-    # print(f'remove_point_from_centroid: centroid_point is {centroid_point}, amount is: {amount}')
-    # if amount == 1:
-    #     centroids[centroid] = ((0 for i in range(len(point))), 0)
-    # else:
+    centroid_point , amount  = centroids[i_centroid]
     for i in range(len(point)):
         centroid_point[i] = (centroid_point[i] * amount - point[i]) / (amount-1)
-    centroids[centroid][1] -= 1
+    centroids[i_centroid][1] -= 1
     # print(f'remove_point_from_centroid: centroid after removal is: {centroids[centroid]}')
 
 # adds a point to a specified centroid
-def add_point_to_centroid(point, centroid, centroids):
+def add_point_to_centroid(point: tuple, i_centroid: int, centroids: list):
     # print(f'add_point_to_centroid: adding point {point} to centroid {centroid}')
-    centroid_point , amount  = centroids[centroid]
+    centroid , amount  = centroids[i_centroid]
     # print(f'add_point_to_centroid: centroid_point is {centroid_point}, amount is: {amount}')
     for i in range(len(point)):
-        centroid_point[i] = (centroid_point[i] * amount + point[i]) / (amount+1)
-    centroids[centroid][1] += 1
+        centroid[i] = (centroid[i] * amount + point[i]) / (amount+1)
+    centroids[i_centroid][1] += 1
     # print(f'add_point_to_centroid: centroid after addition is: {centroids[centroid]}')
 
 # initialises first k points to centroids 1,...,k and the rest to centroid 'inf'
 # initialises centroids 1,...,k to contain points 1,...,k accordingly
-def initialise():
+def initialise(k: int):
     points_to_centroids = {}
-    centroids = {}
+    centroids = []
     index = 0
     while (True):
         try:
@@ -74,12 +71,11 @@ def initialise():
             # no more points in file
             break
         point = [float(x) for x in input_point.split(',')]
-        point = tuple(point) # turn point to immutable do it can be a dict key
         if index<k:
-            points_to_centroids[point] = index
-            centroids[index] = [list(point), 1] # [point , amount of points in the centroid]
+            points_to_centroids[tuple(point)] = index # turn point to immutable so it can be a dict key
+            centroids.append([point, 1]) # [point , amount of points in the centroid]
         else:
-            points_to_centroids[point] = float('inf')
+            points_to_centroids[tuple(point)] = float('inf')
         index+=1
     return points_to_centroids, centroids, index
 
@@ -91,7 +87,7 @@ try:
 except IndexError:
     max_iter = None
 
-points_to_centroids , centroids, n = initialise()
+points_to_centroids , centroids, n = initialise(k)
 
 # print(f'points_to_centroids:\n{points_to_centroids}')
 # print(f'centroids:\n{centroids}')
@@ -125,7 +121,7 @@ while changes:
 # print(f'centroids are: {centroids}')
 
 with open("output.txt", "w") as f:
-    for i in range(len(centroids)):
+    for i in range(k):
         four_decimals = ['%.4f' % x for x in centroids[i][0]]
         output_line = f'{four_decimals}'
         output_line = output_line.replace(" ","").replace("'", "")
