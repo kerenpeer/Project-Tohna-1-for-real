@@ -66,18 +66,7 @@ def find_closest_cluster(point: list, curr_cluster: int):
 def move_point(point_id: int, curr_cluster:int, new_cluster: int):
     # print(f'move_point: removing point {point_id} from cluster {curr_cluster}')
     if curr_cluster is not None:
-        # amount = len(clusters_to_points[curr_cluster])
-        # for i in range(dim):
-        #     clusters_to_centroids[curr_cluster][i] = (clusters_to_centroids[curr_cluster][i] * amount - point[i]) / (amount-1)
-        clusters_to_points[curr_cluster].remove(point_id)
-        
-    # else:
-        # x isn't in a cluster, no need to remove
-        # print(f'move_point: centroid is inf, nowhere to remove from')
-    # print(f'move_point: adding point {point_id} to cluster {new_cluster}')
-    # amount = len(clusters_to_points[new_cluster])
-    # for i in range(dim):
-    #     clusters_to_centroids[new_cluster][i] = (clusters_to_centroids[new_cluster][i] * amount + point[i]) / (amount+1)
+        clusters_to_points[curr_cluster].remove(point_id)    
     clusters_to_points[new_cluster].append(point_id)
     points_to_clusters[point_id] = new_cluster
 
