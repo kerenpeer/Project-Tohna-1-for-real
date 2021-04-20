@@ -1,68 +1,10 @@
-from os import CLD_EXITED
 import sys
 
-# truncate the decimals of a float
-def truncate(num, n):
-    integer = int(num * (10**n))/(10**n)
-    return float(integer)
-
-# calculates the distance between 2 points
-def calc_dist(point1, point2):
-    sum = 0.0
-    for i in range(len(point1)):
-        sum += (point1[i] - point2[i]) ** 2
-    return sum
-
-# goes over all centroids and returns the closest one to point
-def find_closest_centroid(point: tuple, curr_centroid: int, centroids: list):
-    i_closest = curr_centroid
-    # print(f'find_closest_centroid: closest centroid is: {closest}')
-    if i_closest == float('inf'):
-        closest_dist = float('inf')
-    else:
-        # print(f'find_closest_centroid: calc dist between {point} , {centroids[closest][0]}')
-        closest_dist = calc_dist(point, centroids[i_closest][0])
-    # print(f'find_closest_centroid: closest_dist is: {closest_dist}')
-
-    for index, centroid in enumerate(centroids):
-        # print(f'find_closest_centroid: calc dist between {point} , {centroids[centroid][0]}')
-        this_dist = calc_dist(point, centroid[0])
-        # (f'find_closest_centroid: this_dist is: {this_dist}')
-        if this_dist < closest_dist:
-            # print (f'find_closest_centroid: found closer centroid. Dist is: {this_dist}, centroid is: {centroid}')
-            i_closest = index
-            closest_dist = this_dist
-            # print(f'find_closest_centroid: new closest is: {closest} , closest_dist is: {closest_dist}')
-    return i_closest
-
-# removes a point from the centroid it was in
-def remove_point_from_centroid(point: tuple, i_centroid: int, centroids: list):
-    # print(f'remove_point_from_centroid: removing point {point} from centroid {centroid}')
-    if i_centroid == float('inf'):
-        # x isn't in a centroid, no need to remove
-        # print(f'remove_point_from_centroid: centroid is inf, nowhere to remove from')
-        return
-    centroid_point , amount  = centroids[i_centroid]
-    for i in range(len(point)):
-        centroid_point[i] = (centroid_point[i] * amount - point[i]) / (amount-1)
-    centroids[i_centroid][1] -= 1
-    # print(f'remove_point_from_centroid: centroid after removal is: {centroids[centroid]}')
-
-# adds a point to a specified centroid
-def add_point_to_centroid(point: tuple, i_centroid: int, centroids: list):
-    # print(f'add_point_to_centroid: adding point {point} to centroid {centroid}')
-    centroid , amount  = centroids[i_centroid]
-    # print(f'add_point_to_centroid: centroid_point is {centroid_point}, amount is: {amount}')
-    for i in range(len(point)):
-        centroid[i] = (centroid[i] * amount + point[i]) / (amount+1)
-    centroids[i_centroid][1] += 1
-    # print(f'add_point_to_centroid: centroid after addition is: {centroids[centroid]}')
-
-# initialises first k points to centroids 1,...,k and the rest to centroid 'inf'
-# initialises centroids 1,...,k to contain points 1,...,k accordingly
 def initialise(k: int):
-    points_to_centroids = {}
-    centroids = []
+    points = []
+    points_to_clusters = []
+    clusters_to_points = []
+    clusters_to_centroids = []
     index = 0
     while (True):
         try:
@@ -71,14 +13,73 @@ def initialise(k: int):
             # no more points in file
             break
         point = [float(x) for x in input_point.split(',')]
+        points.append(point) # this point's id is "index"
         if index<k:
-            points_to_centroids[tuple(point)] = index # turn point to immutable so it can be a dict key
-            centroids.append([point, 1]) # [point , amount of points in the centroid]
+            points_to_clusters.append(index) # asign cluster "index" to point "index" 
+            clusters_to_points.append([index]) # asign point "index" to cluster "index"
+            clusters_to_centroids.append(point) # set "point" as cluster "index"'s centroid
         else:
-            points_to_centroids[tuple(point)] = float('inf')
+            points_to_clusters.append(None) # asign cluster "None" to point "index" 
         index+=1
-    return points_to_centroids, centroids, index
+    return points, points_to_clusters, clusters_to_points, clusters_to_centroids, index
 
+def calc_centroid(cluster_id: int):
+    sum = [0.0 for i in range(dim)]
+    amount_points_in_cluster = len(clusters_to_points[cluster_id])
+    for point_id in clusters_to_points[cluster_id]:
+        point = points[point_id]
+        for i in range(dim):
+            sum[i] += point[i]
+    for i in range(dim):
+        sum[i] = sum[i]/amount_points_in_cluster
+    return sum
+
+def get_centroid(cluster_id: int):
+    return clusters_to_centroids[cluster_id]
+
+# calculates the distance between 2 points
+def calc_dist(point1: list, point2: list):
+    sum = 0.0
+    for i in range(len(point1)):
+        sum += (point1[i] - point2[i]) ** 2
+    return sum
+
+def find_closest_cluster(point: list, curr_cluster: int):
+    closest_cluster = curr_cluster
+    # print(f'find_closest_cluster: current cluster is: {closest_cluster}')
+    if closest_cluster is None:
+        closest_dist = float('inf')
+    else:
+        centroid = get_centroid(curr_cluster)
+        closest_dist = calc_dist(point, centroid)
+    # print(f'find_closest_cluster: current_dist is: {closest_dist}')
+    for cluster_id in range(len(clusters_to_points)):
+        centroid = get_centroid(cluster_id)
+        this_dist = calc_dist(point, centroid)
+        # print(f'find_closest_cluster: dist from cluster {cluster_id} is: {this_dist}')
+        if this_dist < closest_dist:
+            closest_dist = this_dist
+            closest_cluster = cluster_id
+    # print(f'find_closest_cluster: closest cluster is: {closest_cluster}')
+    return closest_cluster
+
+def move_point(point_id: int, curr_cluster:int, new_cluster: int):
+    # print(f'move_point: removing point {point_id} from cluster {curr_cluster}')
+    if curr_cluster is not None:
+        # amount = len(clusters_to_points[curr_cluster])
+        # for i in range(dim):
+        #     clusters_to_centroids[curr_cluster][i] = (clusters_to_centroids[curr_cluster][i] * amount - point[i]) / (amount-1)
+        clusters_to_points[curr_cluster].remove(point_id)
+        
+    # else:
+        # x isn't in a cluster, no need to remove
+        # print(f'move_point: centroid is inf, nowhere to remove from')
+    # print(f'move_point: adding point {point_id} to cluster {new_cluster}')
+    # amount = len(clusters_to_points[new_cluster])
+    # for i in range(dim):
+    #     clusters_to_centroids[new_cluster][i] = (clusters_to_centroids[new_cluster][i] * amount + point[i]) / (amount+1)
+    clusters_to_points[new_cluster].append(point_id)
+    points_to_clusters[point_id] = new_cluster
 
 # main
 k = int(sys.argv[1])
@@ -87,13 +88,15 @@ try:
 except IndexError:
     max_iter = None
 
-points_to_centroids , centroids, n = initialise(k)
+points, points_to_clusters, clusters_to_points, clusters_to_centroids, n = initialise(k)
 
-# print(f'points_to_centroids:\n{points_to_centroids}')
-# print(f'centroids:\n{centroids}')
+# print(f'points:\n{points}')
+# print(f'points_to_clusters:\n{points_to_clusters}')
+# print(f'clusters_to_points:\n{clusters_to_points}')
 
 changes = True
 index = 0
+dim = len(points[0])
 while changes:
     # if max_iter was provided, check
     if max_iter:
@@ -103,26 +106,29 @@ while changes:
         index+=1
 
     changes = False
-    for point , curr_centroid in points_to_centroids.items():
-        # print(f'going over point: {point}, in centroid {curr_centroid}')
-        new_centroid = find_closest_centroid(point, curr_centroid, centroids)
-        # print(f'new_centroid is: {new_centroid}')
-        if new_centroid != curr_centroid:
-            # print(f'centroids are different')
-            remove_point_from_centroid(point, curr_centroid, centroids)
-            add_point_to_centroid(point, new_centroid, centroids)
-            points_to_centroids[point] = new_centroid
+    for i in range(len(points)):
+        point = points[i]
+        curr_cluster = points_to_clusters[i]
+        # print(f'going over point: {point}, in cluster {curr_cluster}')
+        new_cluster = find_closest_cluster(point, curr_cluster)
+        # print(f'new_cluster is: {new_cluster}')
+        if new_cluster != curr_cluster:
+            # print(f'clusters are different')
+            move_point(i, curr_cluster, new_cluster)
             changes = True
-            # print(f'points_to_clusters = {points_to_centroids}')
-            # print(f'centroids are: {centroids}')
+    for i in range(len(clusters_to_points)):
+        new_centroid = calc_centroid(i)
+        clusters_to_centroids[i] = new_centroid
 
-# print('\n\n')
-# print(f'points_to_clusters = {points_to_centroids}')
-# print(f'centroids are: {centroids}')
+
+# print(f'\n\npoints:\n{points}')
+# print(f'points_to_clusters:\n{points_to_clusters}')
+# print(f'clusters_to_points:\n{clusters_to_points}')
 
 with open("output.txt", "w") as f:
-    for i in range(k):
-        four_decimals = ['%.4f' % x for x in centroids[i][0]]
+    for i in range(len(clusters_to_points)):
+        centroid = get_centroid(i)
+        four_decimals = ['%.4f' % x for x in centroid]
         output_line = f'{four_decimals}'
-        output_line = output_line.replace(" ","").replace("'", "")
+        output_line = output_line.replace(" ","").replace("'","")
         f.write(f'{output_line[1:-1]}\n')
