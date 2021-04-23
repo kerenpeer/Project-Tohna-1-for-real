@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Keren", "Keren\Keren.vcxproj", "{118138F5-0992-4DCA-B970-1893B463C35F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Debug|x64.ActiveCfg = Debug|x64
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Debug|x64.Build.0 = Debug|x64
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Debug|x86.ActiveCfg = Debug|Win32
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Debug|x86.Build.0 = Debug|Win32
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Release|x64.ActiveCfg = Release|x64
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Release|x64.Build.0 = Release|x64
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Release|x86.ActiveCfg = Release|Win32
+		{118138F5-0992-4DCA-B970-1893B463C35F}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {62B0A6F1-1F9C-4A41-A9D5-ACDD7230CB23}
+	EndGlobalSection
+EndGlobal
