@@ -2,7 +2,7 @@
 
 int main()
 {
-	printf("hello!");
+	printf("Working on K-means!");
 
 	return 0;
 }

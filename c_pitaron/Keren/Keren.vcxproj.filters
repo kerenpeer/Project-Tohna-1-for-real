@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="keren_main.c">
+    <ClCompile Include="kmeans.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
