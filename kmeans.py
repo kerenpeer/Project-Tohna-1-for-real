@@ -75,7 +75,7 @@ k = int(sys.argv[1])
 try:
     max_iter = int(sys.argv[2])
 except IndexError:
-    max_iter = None
+    max_iter = 200
 
 points, points_to_clusters, clusters_to_points, clusters_to_centroids, n = initialise(k)
 
@@ -87,12 +87,10 @@ changes = True
 index = 0
 dim = len(points[0])
 while changes:
-    # if max_iter was provided, check
-    if max_iter:
-        if index == max_iter:
-            # print('max iterations acheived')
-            break
-        index+=1
+    if index == max_iter:
+        # print('max iterations acheived')
+        break
+    index+=1
 
     changes = False
     for i in range(len(points)):
