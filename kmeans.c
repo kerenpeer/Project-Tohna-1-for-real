@@ -1,26 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cassert>
-#include <cfloat>
+#include <assert.h>
+#include <float.h>
 
 void printMatrix(int rows, int cols, float** matrix);
 void printMatrixint(int rows, int cols, int* matrix);
 int pointSize(FILE* file);
 int howManyLines(FILE* file);
-void init(int K, int N, int sizeOfPoint, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file);
+void init(int K, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file);
 int findClosestCluster(float* point, float** centroidArray, int K, int sizeOfPoint);
 void changeCluster(int i, int newCluster, int* whichClusterArray);
 void calcNewCentroids(float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, int N, int sizeOfPoint);
 void makeCendroidsAndAmountZero(float** centroidsArray,int* amount, int K, int pointSize);
+void free_double_pointer(float **array, int arrayLen);
 
-void init(int K, int N, int sizeOfPoint, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file) {
-    char* point;
-    char* line[1000];
-    char* val;
+
+void init(int K, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file) {
+    char* point, *line;
     int i, j;
     fseek(file, 0, SEEK_SET);
     i = 0;
+    line = (char*) malloc(1000 * sizeof(char));
+    assert(line && "line allocation failed");
     while (fgets(line, 1000, file) != NULL) {
         j = 0;
         point = strtok(line, ",");
@@ -38,12 +40,16 @@ void init(int K, int N, int sizeOfPoint, float** datapointsArray, float** centro
         whichClusterArray[i] = i;
         amountOfPointsInCluster[i] = 1;
     }
+    free(line);
 }
 
-int pointSize(FILE* file) {     //counts size of each datapoint
-    fseek(file, 0, SEEK_SET);
-    int numOfCords = 1;
+/* counts size of each datapoint */ 
+int pointSize(FILE* file) {
+    int numOfCords;
     char c;
+
+    numOfCords = 1;
+    fseek(file, 0, SEEK_SET);
     for (c = getc(file); c != '\n'; c = getc(file))
         if (c == ',') {
             numOfCords = numOfCords + 1;
@@ -51,14 +57,15 @@ int pointSize(FILE* file) {     //counts size of each datapoint
     return numOfCords;
 }
 
-int howManyLines(FILE* file) {      //counts lines in file
+/* counts lines in file */
+int howManyLines(FILE* file) {
+    int counterOfLines; /* Line counter (result) */
+    char c;  /* To store a character read from file */
     fseek(file, 0, SEEK_SET);
-    int counterOfLines = 0;  // Line counter (result)
-    char c;  // To store a character read from file
-
-    // Extract characters from file and store in character c
+    counterOfLines = 0;  
+    /* Extract characters from file and store in character c */
     for (c = getc(file); c != EOF; c = getc(file))
-        if (c == '\n') // Increment count if this character is newline
+        if (c == '\n') /* Increment count if this character is newline */
             counterOfLines = counterOfLines + 1;
 
     return counterOfLines;
@@ -138,46 +145,51 @@ void calcNewCentroids(float** datapointsArray, float** centroidsArray, int* whic
     }
 }
 
-int main(int argc, char* argv[]) {
-    int K, itermax, N, sizeOfPoint, * whichClusterArray, currentCluster, newCluster, * amountOfPointsInCluster;
-    float** datapointsArray, ** centroidsArray, * point;
-    char* filename;
-    int isChanged;       //was there a change or are we done
-    FILE* file;
-    int iteration;
+void free_double_pointer(float **array, int arrayLen){
+    int i;
+    for (i=0; i < arrayLen; i++){
+        free(array[i]);
+    }
+    free(array);
+}
 
-    assert(argc == 4 || argc == 3);
+int main(int argc, char* argv[]) {
+    int i, j, K, itermax, iteration, isChanged, N, sizeOfPoint, * whichClusterArray, currentCluster, newCluster, * amountOfPointsInCluster;
+    float** datapointsArray, ** centroidsArray, * point;
+    FILE* file;
+
+    file = stdin;
+
+    assert((argc == 2 || argc == 3) && "wrong amount of command line arguments");
+
     K = atoi(argv[1]);
-    filename = argv[2];
-    file = fopen(filename, "r");
-    assert(file != NULL);
-    if (argc == 4) {
-        itermax = atoi(argv[3]);
+
+    if (argc == 3) {
+        itermax = atoi(argv[2]);
     }
     else {
         itermax = 200;
     }
+
     N = howManyLines(file);
     sizeOfPoint = pointSize(file);
-    datapointsArray = (float*)malloc((N) * sizeof(float*));
-    assert(datapointsArray);
-    int i;
+    datapointsArray = (float**)malloc((N) * sizeof(float*));
+    assert(datapointsArray && "datapointsArray allocation failed");
     for (i = 0; i < N; i++) {
         datapointsArray[i] = (float*)malloc(sizeOfPoint * sizeof(float));
-        assert(datapointsArray[i]);
+        assert(datapointsArray[i] && "datapointsArray allocation failed");
     }
     whichClusterArray = (int*)calloc(N, sizeof(int));
-    assert(whichClusterArray);
+    assert(whichClusterArray && "whichClusterArray allocation failed");
     amountOfPointsInCluster = (int*)calloc(K, sizeof(int));
-    assert(amountOfPointsInCluster);
-    centroidsArray = (float*)malloc(K * sizeof(float*));
-    assert(centroidsArray);
-    int j;
+    assert(amountOfPointsInCluster && "amountOfPointsArray allocation failed");
+    centroidsArray = (float**)malloc(K * sizeof(float*));
+    assert(centroidsArray && "centroidsArray allocation failed");
     for (j = 0; j < K; j++) {
         centroidsArray[j] = (float*)malloc(sizeof(float) * sizeOfPoint);
-        assert(centroidsArray[j]);
+        assert(centroidsArray[j] && "centroidsArray allocation failed");
     }
-    init(K, N, sizeOfPoint, datapointsArray, centroidsArray, whichClusterArray, amountOfPointsInCluster, file);
+    init(K, datapointsArray, centroidsArray, whichClusterArray, amountOfPointsInCluster, file);
 
     isChanged = 1;
     iteration = 0;
@@ -192,17 +204,21 @@ int main(int argc, char* argv[]) {
         for (i = 0; i < N; i++) {
             point = datapointsArray[i];
             currentCluster = whichClusterArray[i];
-            newCluster = findClosestCluster(point, centroidsArray, K, sizeOfPoint);     //find new cluster by minimal norm
+            newCluster = findClosestCluster(point, centroidsArray, K, sizeOfPoint);  /* find new cluster by minimal norm */
             if (currentCluster != newCluster) {
                 changeCluster(i, newCluster, whichClusterArray);
                 isChanged = 1;
             }
         }
         makeCendroidsAndAmountZero(centroidsArray, amountOfPointsInCluster, K, sizeOfPoint);
-        calcNewCentroids(datapointsArray, centroidsArray, whichClusterArray, amountOfPointsInCluster, N, sizeOfPoint);             //calc new centroid of new cluster for point[j]    
+        calcNewCentroids(datapointsArray, centroidsArray, whichClusterArray, amountOfPointsInCluster, N, sizeOfPoint); /* calc new centroid of new cluster for point[j] */
     }
     printMatrix(K, sizeOfPoint, centroidsArray);
-    fclose(file);
+
+    free(whichClusterArray);
+    free(amountOfPointsInCluster);
+    free_double_pointer(centroidsArray, K);
+    free_double_pointer(datapointsArray, N);
+
+    return 0;
 }
-
-
