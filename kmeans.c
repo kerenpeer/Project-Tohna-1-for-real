@@ -2,21 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <float.h>
 
-void printMatrix(int rows, int cols, float** matrix);
+void printMatrix(int rows, int cols, double** matrix);
 void printMatrixint(int rows, int cols, int* matrix);
 int pointSize(FILE* file);
 int howManyLines(FILE* file);
-void init(int K, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file);
-int findClosestCluster(float* point, float** centroidArray, int K, int sizeOfPoint);
+void init(int K, double** datapointsArray, double** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file);
+int findClosestCluster(double* point, double** centroidArray, int K, int sizeOfPoint);
 void changeCluster(int i, int newCluster, int* whichClusterArray);
-void calcNewCentroids(float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, int N, int sizeOfPoint);
-void makeCendroidsAndAmountZero(float** centroidsArray,int* amount, int K, int pointSize);
-void free_double_pointer(float **array, int arrayLen);
+void calcNewCentroids(double** datapointsArray, double** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, int N, int sizeOfPoint);
+void makeCendroidsAndAmountZero(double** centroidsArray,int* amount, int K, int pointSize);
+void free_double_pointer(double **array, int arrayLen);
 
 
-void init(int K, float** datapointsArray, float** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file) {
+void init(int K, double** datapointsArray, double** centroidsArray, int* whichClusterArray, int* amountOfPointsInCluster, FILE* file) {
     char* point, *line;
     int i, j;
     fseek(file, 0, SEEK_SET);
@@ -71,7 +70,7 @@ int howManyLines(FILE* file) {
     return counterOfLines;
 }
 
-void printMatrix(int rows, int cols, float** matrix) {
+void printMatrix(int rows, int cols, double** matrix) {
     int i, j; 
     for (i = 0; i < rows; i++) {
         for (j = 0; j < cols; j++) {
@@ -96,19 +95,20 @@ void printMatrixint(int rows, int cols, int* matrix) {
     }
 }
 
-int findClosestCluster(float* point, float** centroidArray, int K, int sizeOfPoint){
-    float mindist, sum;
+int findClosestCluster(double* point, double** centroidArray, int K, int sizeOfPoint){
+    double mindist, sum;
     int newCluster,i,j;
-    float* centroidToCheck;
+    double* centroidToCheck;
 
-    mindist = FLT_MAX;
+    mindist = -1;
+    newCluster = -1;
     for (i = 0; i < K; i++) {
         sum = 0;
         centroidToCheck = centroidArray[i];
         for (j = 0; j < sizeOfPoint; j++) {
             sum = sum + ((point[j] - centroidToCheck[j]) * (point[j] - centroidToCheck[j]));
         }
-        if (sum < mindist) {
+        if (mindist == -1 || sum < mindist) {
             mindist = sum;
             newCluster = i;
         }
@@ -120,7 +120,7 @@ void changeCluster(int i, int newCluster, int* whichClusterArray) {
     whichClusterArray[i] = newCluster;
 }
 
-void makeCendroidsAndAmountZero(float** centroidsArray, int* amount, int K, int sizeOfPoint) {
+void makeCendroidsAndAmountZero(double** centroidsArray, int* amount, int K, int sizeOfPoint) {
     int i, j;
     for (i = 0; i < K; i++) {
         amount[i] = 0;
@@ -130,10 +130,10 @@ void makeCendroidsAndAmountZero(float** centroidsArray, int* amount, int K, int 
     }
 }
 
-void calcNewCentroids(float** datapointsArray, float** centroidsArray, int* whichClusterArray,
+void calcNewCentroids(double** datapointsArray, double** centroidsArray, int* whichClusterArray,
     int* amountOfPointsInCluster, int N, int sizeOfPoint) {
     int i, j, newCluster;
-    float prevSum, newVal;
+    double prevSum, newVal;
     for (i = 0; i < N; i++) {
         newCluster = whichClusterArray[i];
         for (j = 0; j < sizeOfPoint; j++) {
@@ -145,7 +145,7 @@ void calcNewCentroids(float** datapointsArray, float** centroidsArray, int* whic
     }
 }
 
-void free_double_pointer(float **array, int arrayLen){
+void free_double_pointer(double **array, int arrayLen){
     int i;
     for (i=0; i < arrayLen; i++){
         free(array[i]);
@@ -155,7 +155,7 @@ void free_double_pointer(float **array, int arrayLen){
 
 int main(int argc, char* argv[]) {
     int i, j, K, itermax, iteration, isChanged, N, sizeOfPoint, * whichClusterArray, currentCluster, newCluster, * amountOfPointsInCluster;
-    float** datapointsArray, ** centroidsArray, * point;
+    double** datapointsArray, ** centroidsArray, * point;
     FILE* file;
 
     file = stdin;
@@ -173,20 +173,20 @@ int main(int argc, char* argv[]) {
 
     N = howManyLines(file);
     sizeOfPoint = pointSize(file);
-    datapointsArray = (float**)malloc((N) * sizeof(float*));
+    datapointsArray = (double**)malloc((N) * sizeof(double*));
     assert(datapointsArray && "datapointsArray allocation failed");
     for (i = 0; i < N; i++) {
-        datapointsArray[i] = (float*)malloc(sizeOfPoint * sizeof(float));
+        datapointsArray[i] = (double*)malloc(sizeOfPoint * sizeof(double));
         assert(datapointsArray[i] && "datapointsArray allocation failed");
     }
     whichClusterArray = (int*)calloc(N, sizeof(int));
     assert(whichClusterArray && "whichClusterArray allocation failed");
     amountOfPointsInCluster = (int*)calloc(K, sizeof(int));
     assert(amountOfPointsInCluster && "amountOfPointsArray allocation failed");
-    centroidsArray = (float**)malloc(K * sizeof(float*));
+    centroidsArray = (double**)malloc(K * sizeof(double*));
     assert(centroidsArray && "centroidsArray allocation failed");
     for (j = 0; j < K; j++) {
-        centroidsArray[j] = (float*)malloc(sizeof(float) * sizeOfPoint);
+        centroidsArray[j] = (double*)malloc(sizeof(double) * sizeOfPoint);
         assert(centroidsArray[j] && "centroidsArray allocation failed");
     }
     init(K, datapointsArray, centroidsArray, whichClusterArray, amountOfPointsInCluster, file);
@@ -205,6 +205,9 @@ int main(int argc, char* argv[]) {
             point = datapointsArray[i];
             currentCluster = whichClusterArray[i];
             newCluster = findClosestCluster(point, centroidsArray, K, sizeOfPoint);  /* find new cluster by minimal norm */
+            if (newCluster == -1){
+                newCluster = currentCluster;
+            }
             if (currentCluster != newCluster) {
                 changeCluster(i, newCluster, whichClusterArray);
                 isChanged = 1;
