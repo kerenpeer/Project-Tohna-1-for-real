@@ -66,11 +66,17 @@ def move_point(point_id: int, curr_cluster:int, new_cluster: int):
     points_to_clusters[point_id] = new_cluster
 
 # main
-k = int(sys.argv[1])
+try:
+    k = int(sys.argv[1])
+except:
+    print ("invalid input")
 try:
     max_iter = int(sys.argv[2])
-except IndexError:
-    max_iter = 200
+except Exception as e:
+    if type(e) == IndexError:
+        max_iter = 200
+    else:
+        print ("invalid input")
 
 points, points_to_clusters, clusters_to_points, clusters_to_centroids, n = initialise(k)
 
