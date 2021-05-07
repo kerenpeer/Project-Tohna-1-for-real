@@ -46,25 +46,20 @@ def calc_dist(point1: list, point2: list):
 
 def find_closest_cluster(point: list, curr_cluster: int):
     closest_cluster = curr_cluster
-    # print(f'find_closest_cluster: current cluster is: {closest_cluster}')
     if closest_cluster is None:
         closest_dist = float('inf')
     else:
         centroid = get_centroid(curr_cluster)
         closest_dist = calc_dist(point, centroid)
-    # print(f'find_closest_cluster: current_dist is: {closest_dist}')
     for cluster_id in range(len(clusters_to_points)):
         centroid = get_centroid(cluster_id)
         this_dist = calc_dist(point, centroid)
-        # print(f'find_closest_cluster: dist from cluster {cluster_id} is: {this_dist}')
         if this_dist < closest_dist:
             closest_dist = this_dist
             closest_cluster = cluster_id
-    # print(f'find_closest_cluster: closest cluster is: {closest_cluster}')
     return closest_cluster
 
 def move_point(point_id: int, curr_cluster:int, new_cluster: int):
-    # print(f'move_point: removing point {point_id} from cluster {curr_cluster}')
     if curr_cluster is not None:
         clusters_to_points[curr_cluster].remove(point_id)    
     clusters_to_points[new_cluster].append(point_id)
@@ -79,16 +74,11 @@ except IndexError:
 
 points, points_to_clusters, clusters_to_points, clusters_to_centroids, n = initialise(k)
 
-# print(f'points:\n{points}')
-# print(f'points_to_clusters:\n{points_to_clusters}')
-# print(f'clusters_to_points:\n{clusters_to_points}')
-
 changes = True
 index = 0
 dim = len(points[0])
 while changes:
     if index == max_iter:
-        # print('max iterations acheived')
         break
     index+=1
 
@@ -96,26 +86,18 @@ while changes:
     for i in range(len(points)):
         point = points[i]
         curr_cluster = points_to_clusters[i]
-        # print(f'going over point: {point}, in cluster {curr_cluster}')
         new_cluster = find_closest_cluster(point, curr_cluster)
-        # print(f'new_cluster is: {new_cluster}')
         if new_cluster != curr_cluster:
-            # print(f'clusters are different')
             move_point(i, curr_cluster, new_cluster)
             changes = True
     for i in range(len(clusters_to_points)):
         new_centroid = calc_centroid(i)
         clusters_to_centroids[i] = new_centroid
 
-
-# print(f'\n\npoints:\n{points}')
-# print(f'points_to_clusters:\n{points_to_clusters}')
-# print(f'clusters_to_points:\n{clusters_to_points}')
-
-with open("output.txt", "w") as f:
-    for i in range(len(clusters_to_points)):
-        centroid = get_centroid(i)
-        four_decimals = ['%.4f' % x for x in centroid]
-        output_line = f'{four_decimals}'
-        output_line = output_line.replace(" ","").replace("'","")
-        f.write(f'{output_line[1:-1]}\n')
+# print to cmd
+for i in range(len(clusters_to_points)):
+    centroid = get_centroid(i)
+    four_decimals = ['%.4f' % x for x in centroid]
+    output_line = f'{four_decimals}'
+    output_line = output_line.replace(" ","").replace("'","")
+    print(f'{output_line[1:-1]}')
