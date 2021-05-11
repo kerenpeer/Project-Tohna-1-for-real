@@ -80,6 +80,9 @@ except Exception as e:
 
 points, points_to_clusters, clusters_to_points, clusters_to_centroids, n = initialise(k)
 
+if k >= n:
+    raise Exception("Too many clusters, K is too big")
+
 changes = True
 index = 0
 dim = len(points[0])
