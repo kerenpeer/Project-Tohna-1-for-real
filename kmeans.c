@@ -172,6 +172,10 @@ int main(int argc, char* argv[]) {
     }
 
     N = howManyLines(file);
+    if (K >= N){
+        printf("Too many clusters, K is too big\n");
+        exit(1);
+    }
     sizeOfPoint = pointSize(file);
     datapointsArray = (double**)malloc((N) * sizeof(double*));
     assert(datapointsArray && "datapointsArray allocation failed");
